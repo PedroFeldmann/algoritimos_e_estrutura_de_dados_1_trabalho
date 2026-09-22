@@ -14,7 +14,11 @@ Trabalho de Algoritmos e Estrutura de Dados 1.
 
 ## Como rodar
 
-Pré-requisitos: JDK 17+ e Maven.
+**Sem instalar nada:** baixe [`dist/GerenciadorDeProjetos.zip`](dist/GerenciadorDeProjetos.zip),
+extraia a pasta inteira e execute `GerenciadorDeProjetos.exe` (Windows). Já
+vem com o runtime Java embutido — não precisa ter Java instalado.
+
+**A partir do código-fonte:** pré-requisitos JDK 17+ e Maven.
 
 ```bash
 mvn javafx:run
@@ -27,6 +31,10 @@ mvn test
 ```
 
 ## Como gerar um executável standalone (Windows)
+
+O repositório já traz um executável pronto em `dist/GerenciadorDeProjetos.zip`
+(ver seção "Como rodar" acima). Esta seção é só para regerá-lo depois de
+alterar o código.
 
 Gera uma pasta com `GerenciadorDeProjetos.exe` e um runtime Java embutido —
 não precisa ter Java instalado na máquina que for rodar. Requer JDK 17+ com
