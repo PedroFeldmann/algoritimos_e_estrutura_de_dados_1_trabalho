@@ -3,6 +3,16 @@
 Histórico de mudanças de escopo/domínio/comportamento. Ver `CLAUDE.md` na raiz
 para a regra de quando registrar uma entrada aqui.
 
+## 2026-09-22
+
+- **Build, UI**: adicionada `ui.Launcher` (classe `main` sem estender
+  `Application`) e documentado no README como gerar um executável standalone
+  do Windows via `jpackage` (`mvn dependency:copy-dependencies` + `jpackage
+  --type app-image`). Sem `Launcher`, o `jpackage`/`java -jar` recusam iniciar
+  com "JavaFX runtime components are missing" porque o projeto não usa
+  module-info.java (ADR-001) e a classe `main` original (`ui.Main`) é ela
+  mesma uma `Application`.
+
 ## 2026-09-21
 
 - **PRD, ADR, repository, UI**: novo botão "📁 Local dos dados" no Dashboard

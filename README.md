@@ -26,6 +26,32 @@ mvn javafx:run
 mvn test
 ```
 
+## Como gerar um executável standalone (Windows)
+
+Gera uma pasta com `GerenciadorDeProjetos.exe` e um runtime Java embutido —
+não precisa ter Java instalado na máquina que for rodar. Requer JDK 17+ com
+`jpackage` (vem junto do JDK desde a versão 14).
+
+```bash
+mvn dependency:copy-dependencies -DoutputDirectory=target/libs -DincludeScope=runtime
+mvn package -DskipTests
+cp target/gerenciador-projetos-1.0-SNAPSHOT.jar target/libs/
+
+jpackage --type app-image ^
+  --input target/libs ^
+  --dest target/dist ^
+  --name GerenciadorDeProjetos ^
+  --main-jar gerenciador-projetos-1.0-SNAPSHOT.jar ^
+  --main-class br.edu.trabalho.gerenciadorprojetos.ui.Launcher ^
+  --app-version 1.0
+```
+
+O executável fica em `target/dist/GerenciadorDeProjetos/GerenciadorDeProjetos.exe`
+(pasta inteira, não só o `.exe`, precisa ser copiada/distribuída). O ponto de
+entrada é `ui.Launcher`, não `ui.Main` — ver comentário na classe: o runtime do
+JavaFX recusa iniciar quando a classe com `main` é a própria `Application`
+rodando fora do module-path (este projeto não usa module-info.java, ADR-001).
+
 ## Estrutura do código
 
 ```
