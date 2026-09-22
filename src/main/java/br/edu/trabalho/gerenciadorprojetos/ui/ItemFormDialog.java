@@ -31,10 +31,16 @@ public class ItemFormDialog {
 
         TextField campoTitulo = new TextField(valoresAtuais.titulo());
         campoTitulo.setPromptText(rotuloCampoPrincipal);
+        campoTitulo.getStyleClass().add("form-field");
         TextArea campoDescricao = new TextArea(valoresAtuais.descricao());
         campoDescricao.setPromptText("Descrição");
         campoDescricao.setPrefRowCount(3);
+        campoDescricao.getStyleClass().add("form-field");
         DatePicker campoData = new DatePicker(valoresAtuais.dataLimite());
+        campoData.getStyleClass().add("form-field");
+
+        dialog.getDialogPane().getStylesheets()
+                .add(ItemFormDialog.class.getResource("app.css").toExternalForm());
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -46,6 +52,7 @@ public class ItemFormDialog {
         dialog.getDialogPane().setContent(grid);
 
         Button botaoOk = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+        botaoOk.getStyleClass().add("btn-primary");
         botaoOk.disableProperty().bind(campoTitulo.textProperty().isEmpty());
 
         dialog.setResultConverter(botao -> {

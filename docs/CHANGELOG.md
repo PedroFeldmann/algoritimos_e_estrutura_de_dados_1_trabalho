@@ -3,6 +3,32 @@
 Histórico de mudanças de escopo/domínio/comportamento. Ver `CLAUDE.md` na raiz
 para a regra de quando registrar uma entrada aqui.
 
+## 2026-09-21
+
+- **PRD, ADR, repository, UI**: novo botão "📁 Local dos dados" no Dashboard
+  para o usuário escolher em qual pasta o `dados.json` é salvo (RF10). Nova
+  classe `ArmazenamentoConfig` (pacote `repository`) guarda a pasta escolhida
+  via `java.util.prefs.Preferences` e migra o arquivo existente para lá. Ver
+  `docs/adr/ADR-005-local-de-armazenamento-configuravel.md`. Sem a escolha,
+  comportamento continua igual ao de ADR-002 (`~/.gerenciador-projetos`).
+
+## 2026-09-16
+
+- **UI**: redesenho visual das 3 telas de navegação (Dashboard, Etapas, Tarefas),
+  aprovado antes via wireframe (artifact). Sem mudança de domínio/regras de
+  negócio — apenas apresentação:
+  - Novo stylesheet `src/main/resources/.../ui/app.css` (cores, cards, pills de
+    status, botões) carregado pelo `Navigator`, substituindo os `-fx-style`
+    inline que existiam em cada tela.
+  - Dashboard ganhou tiles de resumo (projetos ativos, itens atrasados,
+    próximos 7 dias — todos calculados a partir de dados já existentes, nenhum
+    campo novo), busca por nome de projeto (filtro em memória, só na UI) e
+    barra de progresso por projeto (fração de etapas concluídas).
+  - Etapas/Tarefas ganharam breadcrumb com botão "← Dashboard" e lista em
+    cartão único no lugar de linhas soltas.
+  - `StatusBadge` passou a gerar pills via style class (CSS) em vez de
+    `-fx-style` montado em Java.
+
 ## 2026-09-15 (2)
 
 - **UI, service**: Etapa e Tarefa agora têm edição (nome/título, descrição, data

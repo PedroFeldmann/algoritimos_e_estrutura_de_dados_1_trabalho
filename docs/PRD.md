@@ -87,6 +87,7 @@ Fornecer uma aplicação simples, local, que permita:
 | RF07 | O sistema deve permitir navegar do Dashboard para um Projeto específico, e deste para suas Etapas e Tarefas. |
 | RF08 | O sistema deve persistir os dados localmente em arquivo, mantendo-os entre execuções. |
 | RF09 | O sistema deve exibir uma lista de "Próximos prazos" agregando etapas/tarefas ordenadas por data limite. |
+| RF10 | O sistema deve permitir ao usuário escolher em qual pasta o arquivo de dados é salvo, a partir de um botão no Dashboard. A escolha é lembrada entre execuções. |
 
 ## 7. Requisitos não funcionais
 

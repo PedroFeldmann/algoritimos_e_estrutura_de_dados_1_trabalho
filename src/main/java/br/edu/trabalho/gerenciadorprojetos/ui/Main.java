@@ -1,5 +1,6 @@
 package br.edu.trabalho.gerenciadorprojetos.ui;
 
+import br.edu.trabalho.gerenciadorprojetos.repository.ArmazenamentoConfig;
 import br.edu.trabalho.gerenciadorprojetos.repository.JsonProjetoRepository;
 import br.edu.trabalho.gerenciadorprojetos.repository.ProjetoRepository;
 import br.edu.trabalho.gerenciadorprojetos.service.ProjetoService;
@@ -14,7 +15,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) {
-        ProjetoRepository repository = new JsonProjetoRepository();
+        ProjetoRepository repository = new JsonProjetoRepository(ArmazenamentoConfig.arquivoAtual());
         ProjetoService service = new ProjetoService(repository);
         Navigator navigator = new Navigator(stage);
 

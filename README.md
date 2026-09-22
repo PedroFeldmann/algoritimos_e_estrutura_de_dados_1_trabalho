@@ -8,7 +8,7 @@ Trabalho de Algoritmos e Estrutura de Dados 1.
 ## Documentação
 
 - [`docs/PRD.md`](docs/PRD.md) — escopo, domínio, requisitos e critérios de aceite.
-- [`docs/adr/`](docs/adr) — decisões de arquitetura (ADR-001 a ADR-004).
+- [`docs/adr/`](docs/adr) — decisões de arquitetura (ADR-001 a ADR-005).
 - Wireframes das telas: publicados como artifact durante o desenvolvimento
   (ver histórico da conversa/relatório do trabalho).
 
@@ -38,4 +38,7 @@ src/main/java/br/edu/trabalho/gerenciadorprojetos/
 
 Ver `docs/adr/ADR-003-arquitetura-em-camadas.md` para a justificativa dessa divisão.
 
-Os dados ficam salvos em `~/.gerenciador-projetos/dados.json`.
+Por padrão os dados ficam salvos em `~/.gerenciador-projetos/dados.json`, mas
+o botão "📁 Local dos dados" no Dashboard permite escolher outra pasta (a
+escolha é lembrada entre execuções — ver
+`docs/adr/ADR-005-local-de-armazenamento-configuravel.md`).

@@ -1,0 +1,314 @@
+/*
+ * Paleta e estilos compartilhados pelas 3 telas de navegação (Dashboard,
+ * Projeto/Etapas, Etapa/Tarefas) + diálogo de formulário.
+ * Cores centralizadas em ".root" via "looked-up colors" do JavaFX CSS, para
+ * não repetir hex em cada tela — ver docs/adr/ADR-003-arquitetura-em-camadas.md
+ * (UI é a camada mais externa; este CSS não conhece domínio nem service).
+ */
+
+.root {
+    -fx-page-bg: #eef1f5;
+    -fx-surface: #ffffff;
+    -fx-border-c: #dfe4ea;
+    -fx-border-soft: #e9edf1;
+    -fx-text: #1c2333;
+    -fx-text-muted: #6b7480;
+    -fx-text-faint: #98a1ac;
+    -fx-accent: #4855c9;
+    -fx-accent-hover: #3a46b3;
+    -fx-accent-soft: #e9eafc;
+    -fx-success: #1f8a5c;
+    -fx-success-soft: #e0f4e9;
+    -fx-warning: #a9701c;
+    -fx-warning-soft: #fbf0dc;
+    -fx-danger: #c33f3f;
+    -fx-danger-soft: #fbe6e6;
+    -fx-neutral: #5b6472;
+    -fx-neutral-soft: #eaedf1;
+
+    -fx-background-color: -fx-page-bg;
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 13px;
+    -fx-text-fill: -fx-text;
+}
+
+.scroll-area > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* ---------- tipografia ---------- */
+.page-title {
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text;
+}
+.page-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: -fx-text-muted;
+}
+.section-label {
+    -fx-font-size: 10.5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-faint;
+}
+.empty-hint {
+    -fx-font-size: 12.5px;
+    -fx-text-fill: -fx-text-faint;
+    -fx-padding: 20 4 20 4;
+}
+
+/* ---------- cartões genéricos ---------- */
+.card {
+    -fx-background-color: -fx-surface;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: -fx-border-c;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(28,35,51,0.12), 14, 0, 0, 5);
+}
+
+/* ---------- botões ---------- */
+.btn-primary {
+    -fx-background-color: -fx-accent;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-padding: 8 16 8 16;
+    -fx-font-weight: bold;
+    -fx-font-size: 12.5px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(72,85,201,0.45), 10, 0, 0, 3);
+}
+.btn-primary:hover {
+    -fx-background-color: -fx-accent-hover;
+}
+
+.btn-secondary {
+    -fx-background-color: -fx-accent-soft;
+    -fx-text-fill: -fx-accent;
+    -fx-background-radius: 8;
+    -fx-padding: 7 14 7 14;
+    -fx-font-weight: bold;
+    -fx-font-size: 12.5px;
+    -fx-cursor: hand;
+}
+.btn-secondary:hover {
+    -fx-background-color: derive(-fx-accent-soft, -8%);
+}
+
+.btn-ghost {
+    -fx-background-color: transparent;
+    -fx-border-color: -fx-border-c;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: -fx-text-muted;
+    -fx-font-size: 10.5px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 10 4 10;
+    -fx-cursor: hand;
+}
+.btn-ghost:hover {
+    -fx-border-color: -fx-text-muted;
+}
+.btn-ghost-danger:hover {
+    -fx-text-fill: -fx-danger;
+    -fx-border-color: -fx-danger;
+}
+
+/* ---------- pills de status ---------- */
+.pill {
+    -fx-padding: 3 10 3 10;
+    -fx-background-radius: 999;
+    -fx-font-size: 10.5px;
+    -fx-font-weight: bold;
+}
+.pill-success { -fx-background-color: -fx-success-soft; -fx-text-fill: -fx-success; }
+.pill-warning { -fx-background-color: -fx-warning-soft; -fx-text-fill: -fx-warning; }
+.pill-danger  { -fx-background-color: -fx-danger-soft;  -fx-text-fill: -fx-danger; }
+.pill-neutral { -fx-background-color: -fx-neutral-soft; -fx-text-fill: -fx-neutral; }
+
+/* faixas coloridas (ex.: painel "Próximos prazos") */
+.stripe { -fx-background-radius: 3; }
+.stripe-success { -fx-background-color: -fx-success; }
+.stripe-warning { -fx-background-color: -fx-warning; }
+.stripe-danger  { -fx-background-color: -fx-danger; }
+.stripe-neutral { -fx-background-color: -fx-neutral; }
+
+/* ---------- tiles de resumo (Dashboard) ---------- */
+.stat-tile {
+    -fx-padding: 14 16 14 16;
+}
+.stat-tile-label {
+    -fx-font-size: 10.5px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-faint;
+}
+.stat-tile-value {
+    -fx-font-size: 23px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text;
+}
+.stat-tile-value-warn {
+    -fx-text-fill: -fx-danger;
+}
+.stat-tile-hint {
+    -fx-font-size: 10.5px;
+    -fx-text-fill: -fx-text-muted;
+}
+
+/* ---------- cartão de projeto ---------- */
+.project-card {
+    -fx-padding: 15;
+    -fx-pref-width: 220;
+    -fx-cursor: hand;
+}
+.project-card-name {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+.project-card-meta {
+    -fx-font-size: 11px;
+    -fx-text-fill: -fx-text-muted;
+}
+.project-card-deadline {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text;
+}
+.project-card-deadline-late {
+    -fx-text-fill: -fx-danger;
+}
+
+.project-progress {
+    -fx-pref-height: 6;
+}
+.project-progress > .track {
+    -fx-background-color: -fx-neutral-soft;
+    -fx-background-radius: 999;
+    -fx-background-insets: 0;
+}
+.project-progress > .bar {
+    -fx-background-color: -fx-accent;
+    -fx-background-radius: 999;
+    -fx-background-insets: 0;
+    -fx-padding: 3px;
+}
+
+.project-card-add {
+    -fx-padding: 15;
+    -fx-pref-width: 220;
+    -fx-min-height: 120;
+    -fx-cursor: hand;
+    -fx-background-color: transparent;
+    -fx-border-color: -fx-text-faint;
+    -fx-border-radius: 12;
+    -fx-border-width: 1.5;
+    -fx-border-style: segments(5, 4) line-cap round;
+    -fx-alignment: center;
+}
+.project-card-add-label {
+    -fx-text-fill: -fx-text-faint;
+    -fx-font-weight: bold;
+    -fx-font-size: 11.5px;
+}
+.project-card-add:hover .project-card-add-label {
+    -fx-text-fill: -fx-accent;
+}
+
+/* ---------- breadcrumb ---------- */
+.breadcrumb-back {
+    -fx-text-fill: -fx-accent;
+    -fx-font-weight: bold;
+    -fx-font-size: 11.5px;
+    -fx-background-color: -fx-accent-soft;
+    -fx-background-radius: 7;
+    -fx-border-color: -fx-accent;
+    -fx-border-radius: 7;
+    -fx-border-width: 1.5;
+    -fx-border-style: segments(4, 3) line-cap round;
+    -fx-padding: 4 10 4 10;
+    -fx-cursor: hand;
+    -fx-underline: false;
+}
+.breadcrumb-link {
+    -fx-text-fill: -fx-accent;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-underline: false;
+}
+.breadcrumb-sep {
+    -fx-text-fill: -fx-text-faint;
+    -fx-font-size: 12px;
+}
+.breadcrumb-current {
+    -fx-text-fill: -fx-text;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* ---------- listas de item (Etapas / Tarefas / Próximos prazos) ---------- */
+.item-list {
+    -fx-padding: 0;
+}
+.item-row {
+    -fx-padding: 12 16 12 16;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent -fx-border-soft transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.item-row.last-row {
+    -fx-border-width: 0;
+}
+.item-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text;
+    -fx-cursor: hand;
+}
+.item-title-done {
+    -fx-text-fill: -fx-text-muted;
+    -fx-strikethrough: true;
+    -fx-font-weight: normal;
+}
+.item-date {
+    -fx-font-size: 11px;
+    -fx-text-fill: -fx-text-faint;
+}
+.item-date-late {
+    -fx-text-fill: -fx-danger;
+    -fx-font-weight: bold;
+}
+.item-sub {
+    -fx-font-size: 11px;
+    -fx-text-fill: -fx-text-muted;
+}
+
+/* checkbox customizado (concluir etapa/tarefa) */
+.task-checkbox .box {
+    -fx-background-color: -fx-surface;
+    -fx-border-color: -fx-border-c;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-padding: 3px;
+}
+.task-checkbox:selected .box {
+    -fx-background-color: -fx-success;
+    -fx-border-color: -fx-success;
+}
+.task-checkbox:selected .mark {
+    -fx-background-color: white;
+}
+
+/* ---------- diálogo de formulário ---------- */
+.dialog-pane {
+    -fx-background-color: -fx-surface;
+}
+.dialog-pane .header-panel {
+    -fx-background-color: -fx-surface;
+}
+.form-field {
+    -fx-background-color: -fx-page-bg;
+    -fx-background-radius: 7;
+    -fx-border-color: -fx-border-c;
+    -fx-border-radius: 7;
+    -fx-padding: 6 8 6 8;
+}

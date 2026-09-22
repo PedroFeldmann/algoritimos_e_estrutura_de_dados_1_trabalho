@@ -2,18 +2,22 @@ package br.edu.trabalho.gerenciadorprojetos.ui;
 
 import br.edu.trabalho.gerenciadorprojetos.domain.Etapa;
 import br.edu.trabalho.gerenciadorprojetos.domain.Projeto;
+import br.edu.trabalho.gerenciadorprojetos.domain.Status;
 import br.edu.trabalho.gerenciadorprojetos.service.ProjetoService;
+import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
-import javafx.scene.control.Hyperlink;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /** Tela 02 dos wireframes: lista de Etapas de um Projeto. */
 public class ProjetoView {
@@ -36,18 +40,21 @@ public class ProjetoView {
     }
 
     private Parent construir(Projeto projeto) {
-        Hyperlink voltar = new Hyperlink("Dashboard");
+        Button voltar = new Button("← Dashboard");
+        voltar.getStyleClass().add("breadcrumb-back");
         voltar.setOnAction(e -> new DashboardView(service, navigator).exibir());
-        Label separador = new Label(" › ");
+
+        Label separador = new Label("›");
+        separador.getStyleClass().add("breadcrumb-sep");
         Label atual = new Label(projeto.getNome());
-        atual.setStyle("-fx-font-weight: bold;");
-        HBox breadcrumb = new HBox(voltar, separador, atual);
+        atual.getStyleClass().add("breadcrumb-current");
+        HBox breadcrumb = new HBox(8, voltar, separador, atual);
         breadcrumb.setAlignment(Pos.CENTER_LEFT);
-        breadcrumb.setStyle("-fx-font-size: 12px;");
 
         Label titulo = new Label("Etapas");
-        titulo.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+        titulo.getStyleClass().add("page-title");
         Button nova = new Button("+ Nova etapa");
+        nova.getStyleClass().add("btn-secondary");
         nova.setOnAction(e -> criarEtapa());
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -55,56 +62,70 @@ public class ProjetoView {
         cabecalho.setAlignment(Pos.CENTER_LEFT);
 
         VBox lista = new VBox();
-        for (Etapa etapa : projeto.getEtapas()) {
-            lista.getChildren().add(linhaEtapa(projeto, etapa));
-        }
-        if (projeto.getEtapas().isEmpty()) {
-            lista.getChildren().add(new Label("Nenhuma etapa cadastrada ainda."));
+        lista.getStyleClass().addAll("card", "item-list");
+        List<Etapa> etapas = projeto.getEtapas();
+        if (etapas.isEmpty()) {
+            Label vazio = new Label("Nenhuma etapa cadastrada ainda.");
+            vazio.getStyleClass().add("empty-hint");
+            lista.getChildren().add(vazio);
+        } else {
+            for (int i = 0; i < etapas.size(); i++) {
+                Node linha = linhaEtapa(projeto, etapas.get(i));
+                if (i == etapas.size() - 1) {
+                    linha.getStyleClass().add("last-row");
+                }
+                lista.getChildren().add(linha);
+            }
         }
 
-        VBox raiz = new VBox(14, breadcrumb, cabecalho, lista);
-        raiz.setPadding(new Insets(20));
+        VBox raiz = new VBox(20, breadcrumb, cabecalho, lista);
+        raiz.setPadding(new Insets(28, 32, 32, 32));
         ScrollPane scroll = new ScrollPane(raiz);
         scroll.setFitToWidth(true);
+        scroll.getStyleClass().add("scroll-area");
         return scroll;
     }
 
     private Node linhaEtapa(Projeto projeto, Etapa etapa) {
-        javafx.scene.control.CheckBox concluida = new javafx.scene.control.CheckBox();
-        concluida.setSelected(etapa.getStatus() == br.edu.trabalho.gerenciadorprojetos.domain.Status.CONCLUIDA);
+        CheckBox concluida = new CheckBox();
+        concluida.getStyleClass().add("task-checkbox");
+        concluida.setSelected(etapa.getStatus() == Status.CONCLUIDA);
         concluida.setOnAction(e -> {
-            var novoStatus = concluida.isSelected()
-                    ? br.edu.trabalho.gerenciadorprojetos.domain.Status.CONCLUIDA
-                    : br.edu.trabalho.gerenciadorprojetos.domain.Status.EM_ANDAMENTO;
+            Status novoStatus = concluida.isSelected() ? Status.CONCLUIDA : Status.EM_ANDAMENTO;
             service.alterarStatusEtapa(projeto.getId(), etapa.getId(), novoStatus);
             exibir();
         });
 
         Label nome = new Label(etapa.getNome());
-        nome.setStyle("-fx-font-size: 14px;");
+        nome.getStyleClass().add("item-title");
+        if (etapa.getStatus() == Status.CONCLUIDA) {
+            nome.getStyleClass().add("item-title-done");
+        }
         nome.setOnMouseClicked(e -> new EtapaView(service, navigator, projeto.getId(), etapa.getId()).exibir());
-        nome.setCursor(javafx.scene.Cursor.HAND);
-        HBox.setHgrow(nome, Priority.ALWAYS);
+        nome.setCursor(Cursor.HAND);
 
         Label data = new Label(etapa.getDataLimite() != null ? etapa.getDataLimite().format(FORMATO_DATA) : "sem data");
-        data.setStyle("-fx-font-size: 11px; -fx-text-fill: #7c7669;");
+        data.getStyleClass().add(etapa.estaAtrasada() ? "item-date-late" : "item-date");
 
         Button editar = new Button("editar");
-        editar.setStyle("-fx-font-size: 10px;");
+        editar.getStyleClass().add("btn-ghost");
+        editar.setOnMouseClicked(Event::consume);
         editar.setOnAction(e -> editarEtapa(projeto, etapa));
 
         Button excluir = new Button("excluir");
-        excluir.getStyleClass().add("link-like");
-        excluir.setStyle("-fx-font-size: 10px;");
+        excluir.getStyleClass().addAll("btn-ghost", "btn-ghost-danger");
         excluir.setOnAction(e -> {
             service.excluirEtapa(projeto.getId(), etapa.getId());
             exibir();
         });
 
-        HBox linha = new HBox(12, concluida, nome, data, StatusBadge.criar(etapa.getStatus(), etapa.estaAtrasada()), editar, excluir);
+        Region espacador = new Region();
+        HBox.setHgrow(espacador, Priority.ALWAYS);
+
+        HBox linha = new HBox(12, concluida, nome, espacador, data,
+                StatusBadge.criar(etapa.getStatus(), etapa.estaAtrasada()), editar, excluir);
         linha.setAlignment(Pos.CENTER_LEFT);
-        linha.setPadding(new Insets(10, 0, 10, 0));
-        linha.setStyle("-fx-border-color: transparent transparent #c6c0b2 transparent;");
+        linha.getStyleClass().add("item-row");
         return linha;
     }
 

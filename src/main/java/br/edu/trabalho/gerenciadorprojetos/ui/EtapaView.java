@@ -5,14 +5,17 @@ import br.edu.trabalho.gerenciadorprojetos.domain.Projeto;
 import br.edu.trabalho.gerenciadorprojetos.domain.Status;
 import br.edu.trabalho.gerenciadorprojetos.domain.Tarefa;
 import br.edu.trabalho.gerenciadorprojetos.service.ProjetoService;
+import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /** Tela 03 dos wireframes: lista de Tarefas de uma Etapa. */
 public class EtapaView {
@@ -39,19 +42,29 @@ public class EtapaView {
     }
 
     private Parent construir(Projeto projeto, Etapa etapa) {
-        Hyperlink dashboard = new Hyperlink("Dashboard");
+        Button dashboard = new Button("← Dashboard");
+        dashboard.getStyleClass().add("breadcrumb-back");
         dashboard.setOnAction(e -> new DashboardView(service, navigator).exibir());
+
         Hyperlink doProjeto = new Hyperlink(projeto.getNome());
+        doProjeto.getStyleClass().add("breadcrumb-link");
         doProjeto.setOnAction(e -> new ProjetoView(service, navigator, projeto.getId()).exibir());
+
         Label atual = new Label(etapa.getNome());
-        atual.setStyle("-fx-font-weight: bold;");
-        HBox breadcrumb = new HBox(dashboard, new Label(" › "), doProjeto, new Label(" › "), atual);
+        atual.getStyleClass().add("breadcrumb-current");
+
+        Label sep1 = new Label("›");
+        sep1.getStyleClass().add("breadcrumb-sep");
+        Label sep2 = new Label("›");
+        sep2.getStyleClass().add("breadcrumb-sep");
+
+        HBox breadcrumb = new HBox(8, dashboard, sep1, doProjeto, sep2, atual);
         breadcrumb.setAlignment(Pos.CENTER_LEFT);
-        breadcrumb.setStyle("-fx-font-size: 12px;");
 
         Label titulo = new Label("Tarefas");
-        titulo.setStyle("-fx-font-size: 15px; -fx-font-weight: bold;");
+        titulo.getStyleClass().add("page-title");
         Button nova = new Button("+ Nova tarefa");
+        nova.getStyleClass().add("btn-secondary");
         nova.setOnAction(e -> criarTarefa());
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -59,22 +72,33 @@ public class EtapaView {
         cabecalho.setAlignment(Pos.CENTER_LEFT);
 
         VBox lista = new VBox();
-        for (Tarefa tarefa : etapa.getTarefas()) {
-            lista.getChildren().add(linhaTarefa(projeto, etapa, tarefa));
-        }
-        if (etapa.getTarefas().isEmpty()) {
-            lista.getChildren().add(new Label("Nenhuma tarefa cadastrada ainda."));
+        lista.getStyleClass().addAll("card", "item-list");
+        List<Tarefa> tarefas = etapa.getTarefas();
+        if (tarefas.isEmpty()) {
+            Label vazio = new Label("Nenhuma tarefa cadastrada ainda.");
+            vazio.getStyleClass().add("empty-hint");
+            lista.getChildren().add(vazio);
+        } else {
+            for (int i = 0; i < tarefas.size(); i++) {
+                Node linha = linhaTarefa(projeto, etapa, tarefas.get(i));
+                if (i == tarefas.size() - 1) {
+                    linha.getStyleClass().add("last-row");
+                }
+                lista.getChildren().add(linha);
+            }
         }
 
-        VBox raiz = new VBox(14, breadcrumb, cabecalho, lista);
-        raiz.setPadding(new Insets(20));
+        VBox raiz = new VBox(20, breadcrumb, cabecalho, lista);
+        raiz.setPadding(new Insets(28, 32, 32, 32));
         ScrollPane scroll = new ScrollPane(raiz);
         scroll.setFitToWidth(true);
+        scroll.getStyleClass().add("scroll-area");
         return scroll;
     }
 
     private Node linhaTarefa(Projeto projeto, Etapa etapa, Tarefa tarefa) {
         CheckBox concluida = new CheckBox();
+        concluida.getStyleClass().add("task-checkbox");
         concluida.setSelected(tarefa.getStatus() == Status.CONCLUIDA);
         concluida.setOnAction(e -> {
             tarefa.setStatus(concluida.isSelected() ? Status.CONCLUIDA : Status.EM_ANDAMENTO);
@@ -83,27 +107,33 @@ public class EtapaView {
         });
 
         Label titulo = new Label(tarefa.getTitulo());
-        titulo.setStyle("-fx-font-size: 14px;");
-        HBox.setHgrow(titulo, Priority.ALWAYS);
+        titulo.getStyleClass().add("item-title");
+        if (tarefa.getStatus() == Status.CONCLUIDA) {
+            titulo.getStyleClass().add("item-title-done");
+        }
 
         Label data = new Label(tarefa.getDataLimite() != null ? tarefa.getDataLimite().format(FORMATO_DATA) : "sem data");
-        data.setStyle("-fx-font-size: 11px; -fx-text-fill: #7c7669;");
+        data.getStyleClass().add(tarefa.estaAtrasada() ? "item-date-late" : "item-date");
 
         Button editar = new Button("editar");
-        editar.setStyle("-fx-font-size: 10px;");
+        editar.getStyleClass().add("btn-ghost");
+        editar.setOnMouseClicked(Event::consume);
         editar.setOnAction(e -> editarTarefa(projeto, etapa, tarefa));
 
         Button excluir = new Button("excluir");
-        excluir.setStyle("-fx-font-size: 10px;");
+        excluir.getStyleClass().addAll("btn-ghost", "btn-ghost-danger");
         excluir.setOnAction(e -> {
             service.excluirTarefa(projeto.getId(), etapa.getId(), tarefa.getId());
             exibir();
         });
 
-        HBox linha = new HBox(12, concluida, titulo, data, StatusBadge.criar(tarefa.getStatus(), tarefa.estaAtrasada()), editar, excluir);
+        Region espacador = new Region();
+        HBox.setHgrow(espacador, Priority.ALWAYS);
+
+        HBox linha = new HBox(12, concluida, titulo, espacador, data,
+                StatusBadge.criar(tarefa.getStatus(), tarefa.estaAtrasada()), editar, excluir);
         linha.setAlignment(Pos.CENTER_LEFT);
-        linha.setPadding(new Insets(10, 0, 10, 0));
-        linha.setStyle("-fx-border-color: transparent transparent #c6c0b2 transparent;");
+        linha.getStyleClass().add("item-row");
         return linha;
     }
 
