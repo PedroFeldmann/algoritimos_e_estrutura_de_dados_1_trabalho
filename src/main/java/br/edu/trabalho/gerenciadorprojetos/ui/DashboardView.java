@@ -111,24 +111,23 @@ public class DashboardView {
                 + NotificadorPrazos.DIAS_ANTECEDENCIA + " dias"));
         avisos.setOnAction(e -> ArmazenamentoConfig.definirNotificacoes(sessao.login(), avisos.isSelected()));
 
-        HBox acoes = new HBox(10, avisos, localDados, exportar, importar, busca, novoProjeto);
-        acoes.setAlignment(Pos.CENTER_RIGHT);
-
-        HBox cabecalho = new HBox(titulos, espacador(), acoes);
-        cabecalho.setAlignment(Pos.CENTER_LEFT);
+        // FlowPane: em janelas estreitas (ou com fontes mais largas, como no Linux)
+        // as ações descem para a linha de baixo em vez de ficarem cortadas ("Ex…").
+        FlowPane acoes = new FlowPane(10, 8, busca, novoProjeto, exportar, importar, localDados, avisos);
+        acoes.setAlignment(Pos.CENTER_LEFT);
 
         buscaFiltro = busca;
-        if (sessao == null) {
-            return cabecalho;
+        HBox linhaTitulo = new HBox(10, titulos, espacador());
+        linhaTitulo.setAlignment(Pos.CENTER_LEFT);
+        if (sessao != null) {
+            Label usuario = new Label(sessao.nome());
+            usuario.getStyleClass().add("page-subtitle");
+            Button sair = new Button("Sair");
+            sair.getStyleClass().add("btn-ghost");
+            sair.setOnAction(e -> navigator.sair());
+            linhaTitulo.getChildren().addAll(usuario, sair);
         }
-        Label usuario = new Label("👤 " + sessao.nome());
-        usuario.getStyleClass().add("page-subtitle");
-        Button sair = new Button("Sair");
-        sair.getStyleClass().add("btn-ghost");
-        sair.setOnAction(e -> navigator.sair());
-        HBox barraUsuario = new HBox(10, espacador(), usuario, sair);
-        barraUsuario.setAlignment(Pos.CENTER_RIGHT);
-        return new VBox(10, barraUsuario, cabecalho);
+        return new VBox(12, linhaTitulo, acoes);
     }
 
     /** Faixa de alerta no topo: itens atrasados ou vencendo em breve (independe da notificação do sistema). */
