@@ -36,9 +36,10 @@ Fornecer uma aplicação simples, local, que permita:
 - Visão simples de prazos próximos/atrasados (lista ordenada por data).
 
 ### 4.2 Fora do escopo (não será feito no MVP)
-- Multiusuário, login, permissões.
+- Permissões por projeto e compartilhamento de projetos entre usuários (multiusuário aqui é só
+  contas locais separadas — ver ADR-006).
 - Sincronização em nuvem / colaboração em tempo real.
-- Notificações do sistema operacional.
+- Recuperação e troca de senha.
 - Anexos de arquivos às tarefas.
 - Relatórios avançados, gráficos, dashboards analíticos.
 - Aplicativo mobile ou versão web.
@@ -88,6 +89,14 @@ Fornecer uma aplicação simples, local, que permita:
 | RF08 | O sistema deve persistir os dados localmente em arquivo, mantendo-os entre execuções. |
 | RF09 | O sistema deve exibir uma lista de "Próximos prazos" agregando etapas/tarefas ordenadas por data limite. |
 | RF10 | O sistema deve permitir ao usuário escolher em qual pasta o arquivo de dados é salvo, a partir de um botão no Dashboard. A escolha é lembrada entre execuções. |
+| RF11 | O sistema deve pedir confirmação antes de excluir Projeto, Etapa ou Tarefa. |
+| RF12 | O sistema deve permitir arquivar e restaurar Projetos (arquivados saem do Dashboard e dos prazos). |
+| RF13 | O sistema deve permitir alterar o status de Etapas e Tarefas entre Não iniciada, Em andamento e Concluída. |
+| RF14 | O sistema deve permitir filtrar por status, ordenar por prazo e reordenar manualmente Etapas e Tarefas. |
+| RF15 | O sistema deve permitir exportar e importar os projetos em arquivo JSON. |
+| RF16 | O sistema deve exigir login; cada usuário vê apenas os seus projetos. O primeiro cadastro adota os dados da versão anterior. |
+| RF17 | O sistema deve guardar senhas apenas como hash com sal (nunca em texto puro). |
+| RF18 | O sistema deve avisar (banner e notificação do sistema) sobre itens atrasados ou que vencem em até 2 dias, com opção de desligar. |
 
 ## 7. Requisitos não funcionais
 

@@ -3,8 +3,9 @@ package br.edu.trabalho.gerenciadorprojetos.ui;
 import br.edu.trabalho.gerenciadorprojetos.domain.Etapa;
 import br.edu.trabalho.gerenciadorprojetos.domain.Projeto;
 import br.edu.trabalho.gerenciadorprojetos.domain.Status;
+import br.edu.trabalho.gerenciadorprojetos.domain.StatusProjeto;
 import br.edu.trabalho.gerenciadorprojetos.repository.ArmazenamentoConfig;
-import br.edu.trabalho.gerenciadorprojetos.repository.JsonProjetoRepository;
+import br.edu.trabalho.gerenciadorprojetos.service.NotificadorPrazos;
 import br.edu.trabalho.gerenciadorprojetos.service.PrazoItem;
 import br.edu.trabalho.gerenciadorprojetos.service.ProjetoService;
 import javafx.collections.FXCollections;
@@ -24,6 +25,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javafx.scene.control.CheckBox;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -40,6 +43,8 @@ public class DashboardView {
     private final ProjetoService service;
     private final Navigator navigator;
     private TextField buscaFiltro;
+    private boolean mostrarArquivados;
+    private final FiltroLista filtroPrazos = new FiltroLista();
 
     public DashboardView(ProjetoService service, Navigator navigator) {
         this.service = service;
@@ -51,11 +56,13 @@ public class DashboardView {
     }
 
     private Parent construir() {
-        List<Projeto> projetos = service.listarProjetos();
+        List<Projeto> todos = service.listarProjetos();
+        List<Projeto> projetos = todos.stream().filter(p -> p.getStatus() == StatusProjeto.ATIVO).toList();
         List<PrazoItem> prazos = service.listarProximosPrazos();
+        List<Projeto> exibidos = mostrarArquivados ? todos : projetos;
 
-        VBox raiz = new VBox(22, cabecalho(projetos), painelResumo(projetos, prazos),
-                secaoProjetos(projetos), secaoPrazos(prazos));
+        VBox raiz = new VBox(22, cabecalho(projetos), bannerPrazos(prazos), painelResumo(projetos, prazos),
+                secaoProjetos(exibidos, todos.size() - projetos.size()), secaoPrazos(prazos));
         raiz.setPadding(new Insets(28, 32, 32, 32));
 
         ScrollPane scroll = new ScrollPane(raiz);
@@ -86,14 +93,57 @@ public class DashboardView {
         novoProjeto.getStyleClass().add("btn-primary");
         novoProjeto.setOnAction(e -> criarProjeto());
 
-        HBox acoes = new HBox(10, localDados, busca, novoProjeto);
+        Button exportar = new Button("⬆ Exportar");
+        exportar.getStyleClass().add("btn-ghost");
+        Tooltip.install(exportar, new Tooltip("Salvar uma cópia de todos os projetos num arquivo"));
+        exportar.setOnAction(e -> exportarDados());
+
+        Button importar = new Button("⬇ Importar");
+        importar.getStyleClass().add("btn-ghost");
+        Tooltip.install(importar, new Tooltip("Carregar projetos de um arquivo exportado"));
+        importar.setOnAction(e -> importarDados());
+
+        Sessao sessao = navigator.getSessao();
+        CheckBox avisos = new CheckBox("🔔 Avisar prazos");
+        avisos.setSelected(sessao != null && ArmazenamentoConfig.notificacoesAtivas(sessao.login()));
+        avisos.setDisable(sessao == null);
+        Tooltip.install(avisos, new Tooltip("Notificação do sistema para itens atrasados ou que vencem em até "
+                + NotificadorPrazos.DIAS_ANTECEDENCIA + " dias"));
+        avisos.setOnAction(e -> ArmazenamentoConfig.definirNotificacoes(sessao.login(), avisos.isSelected()));
+
+        HBox acoes = new HBox(10, avisos, localDados, exportar, importar, busca, novoProjeto);
         acoes.setAlignment(Pos.CENTER_RIGHT);
 
         HBox cabecalho = new HBox(titulos, espacador(), acoes);
         cabecalho.setAlignment(Pos.CENTER_LEFT);
 
         buscaFiltro = busca;
-        return cabecalho;
+        if (sessao == null) {
+            return cabecalho;
+        }
+        Label usuario = new Label("👤 " + sessao.nome());
+        usuario.getStyleClass().add("page-subtitle");
+        Button sair = new Button("Sair");
+        sair.getStyleClass().add("btn-ghost");
+        sair.setOnAction(e -> navigator.sair());
+        HBox barraUsuario = new HBox(10, espacador(), usuario, sair);
+        barraUsuario.setAlignment(Pos.CENTER_RIGHT);
+        return new VBox(10, barraUsuario, cabecalho);
+    }
+
+    /** Faixa de alerta no topo: itens atrasados ou vencendo em breve (independe da notificação do sistema). */
+    private Node bannerPrazos(List<PrazoItem> prazos) {
+        List<PrazoItem> pendentes = NotificadorPrazos.pendentesDeAviso(prazos, LocalDate.now());
+        if (pendentes.isEmpty()) {
+            Region vazio = new Region();
+            vazio.setManaged(false);
+            vazio.setVisible(false);
+            return vazio;
+        }
+        Label texto = new Label("⚠ " + NotificadorPrazos.resumo(pendentes));
+        texto.getStyleClass().add("alert-banner");
+        texto.setMaxWidth(Double.MAX_VALUE);
+        return texto;
     }
 
     private Node painelResumo(List<Projeto> projetos, List<PrazoItem> prazos) {
@@ -131,9 +181,21 @@ public class DashboardView {
         return tile;
     }
 
-    private Node secaoProjetos(List<Projeto> projetos) {
+    private Node secaoProjetos(List<Projeto> projetos, int qtdArquivados) {
         Label rotulo = new Label("PROJETOS");
         rotulo.getStyleClass().add("section-label");
+
+        HBox cabecalhoSecao = new HBox(16, rotulo);
+        cabecalhoSecao.setAlignment(Pos.CENTER_LEFT);
+        if (qtdArquivados > 0 || mostrarArquivados) {
+            CheckBox arquivados = new CheckBox("Mostrar arquivados (" + qtdArquivados + ")");
+            arquivados.setSelected(mostrarArquivados);
+            arquivados.setOnAction(e -> {
+                mostrarArquivados = arquivados.isSelected();
+                exibir();
+            });
+            cabecalhoSecao.getChildren().add(arquivados);
+        }
 
         FlowPane grade = new FlowPane(14, 14);
         ObservableList<Projeto> lista = FXCollections.observableArrayList(projetos);
@@ -147,7 +209,7 @@ public class DashboardView {
         }
         redesenharGrade(grade, filtrados);
 
-        VBox secao = new VBox(10, rotulo, grade);
+        VBox secao = new VBox(10, cabecalhoSecao, grade);
         return secao;
     }
 
@@ -199,8 +261,27 @@ public class DashboardView {
             linhaMeta.getChildren().addAll(esp, prazo);
         }
 
-        VBox card = new VBox(10, linhaTopo, badge, barra, linhaMeta);
+        boolean arquivado = projeto.getStatus() == StatusProjeto.ARQUIVADO;
+        Button arquivar = new Button(arquivado ? "restaurar" : "arquivar");
+        arquivar.getStyleClass().add("btn-ghost");
+        arquivar.setOnMouseClicked(javafx.event.Event::consume);
+        arquivar.setOnAction(e -> {
+            service.alterarStatusProjeto(projeto.getId(),
+                    arquivado ? StatusProjeto.ATIVO : StatusProjeto.ARQUIVADO);
+            exibir();
+        });
+        Button excluir = new Button("excluir");
+        excluir.getStyleClass().addAll("btn-ghost", "btn-ghost-danger");
+        excluir.setOnMouseClicked(javafx.event.Event::consume);
+        excluir.setOnAction(e -> excluirProjeto(projeto));
+        HBox linhaAcoes = new HBox(8, arquivar, excluir);
+        linhaAcoes.setAlignment(Pos.CENTER_LEFT);
+
+        VBox card = new VBox(10, linhaTopo, badge, barra, linhaMeta, linhaAcoes);
         card.getStyleClass().addAll("card", "project-card");
+        if (arquivado) {
+            card.setOpacity(0.6);
+        }
         card.setCursor(Cursor.HAND);
         card.setOnMouseClicked(e -> new ProjetoView(service, navigator, projeto.getId()).exibir());
         return card;
@@ -218,6 +299,52 @@ public class DashboardView {
         return card;
     }
 
+    private void excluirProjeto(Projeto projeto) {
+        int etapas = projeto.getEtapas().size();
+        long tarefas = projeto.getEtapas().stream().mapToLong(e -> e.getTarefas().size()).sum();
+        String mensagem = "Excluir o projeto \"" + projeto.getNome() + "\""
+                + (etapas > 0 ? " com " + etapas + " etapas e " + tarefas + " tarefas" : "")
+                + "?\nEsta ação não pode ser desfeita. (Para só esconder, use \"arquivar\".)";
+        if (Dialogos.confirmarExclusao("Excluir projeto", mensagem)) {
+            service.excluirProjeto(projeto.getId());
+            exibir();
+        }
+    }
+
+    private void exportarDados() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Exportar projetos");
+        chooser.setInitialFileName("projetos-" + LocalDate.now() + ".json");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Arquivo JSON", "*.json"));
+        File destino = chooser.showSaveDialog(navigator.getStage());
+        if (destino == null) {
+            return;
+        }
+        try {
+            service.exportar(destino.toPath());
+            Dialogos.informar("Projetos exportados para:\n" + destino);
+        } catch (RuntimeException ex) {
+            Dialogos.erro("Não foi possível exportar: " + ex.getMessage());
+        }
+    }
+
+    private void importarDados() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Importar projetos");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Arquivo JSON", "*.json"));
+        File origem = chooser.showOpenDialog(navigator.getStage());
+        if (origem == null) {
+            return;
+        }
+        try {
+            int qtd = service.importar(origem.toPath());
+            exibir();
+            Dialogos.informar(qtd + " projeto(s) importado(s). Projetos com o mesmo id foram atualizados.");
+        } catch (RuntimeException ex) {
+            Dialogos.erro("Não foi possível importar: " + ex.getMessage());
+        }
+    }
+
     private void editarProjeto(Projeto projeto) {
         var valoresAtuais = new ItemFormDialog.Resultado(projeto.getNome(), projeto.getDescricao(), projeto.getDataLimite());
         ItemFormDialog.abrir("Editar projeto", "Nome", valoresAtuais).ifPresent(resultado -> {
@@ -226,14 +353,20 @@ public class DashboardView {
         });
     }
 
-    private Node secaoPrazos(List<PrazoItem> prazos) {
+    private Node secaoPrazos(List<PrazoItem> todosPrazos) {
         Label rotulo = new Label("PRÓXIMOS PRAZOS");
         rotulo.getStyleClass().add("section-label");
+        List<PrazoItem> prazos = filtroPrazos.aplicar(todosPrazos, PrazoItem::status, PrazoItem::atrasado,
+                PrazoItem::dataLimite);
+        HBox cabecalhoSecao = new HBox(16, rotulo, filtroPrazos.barra(false, this::exibir));
+        cabecalhoSecao.setAlignment(Pos.CENTER_LEFT);
 
         VBox lista = new VBox();
         lista.getStyleClass().addAll("card", "item-list");
         if (prazos.isEmpty()) {
-            Label vazio = new Label("Nenhum prazo cadastrado ainda.");
+            Label vazio = new Label(todosPrazos.isEmpty()
+                    ? "Nenhum prazo cadastrado ainda."
+                    : "Nenhum prazo com esse filtro.");
             vazio.getStyleClass().add("empty-hint");
             lista.getChildren().add(vazio);
         } else {
@@ -246,7 +379,7 @@ public class DashboardView {
             }
         }
 
-        return new VBox(10, rotulo, lista);
+        return new VBox(10, cabecalhoSecao, lista);
     }
 
     private Node linhaPrazo(PrazoItem item) {
@@ -299,9 +432,10 @@ public class DashboardView {
         }
 
         try {
-            Path novoArquivo = ArmazenamentoConfig.escolherNovaPasta(escolhida.toPath());
-            ProjetoService novoService = new ProjetoService(new JsonProjetoRepository(novoArquivo));
-            new DashboardView(novoService, navigator).exibir();
+            ArmazenamentoConfig.escolherNovaPasta(escolhida.toPath());
+            Dialogos.informar("Local alterado para:\n" + escolhida
+                    + "\n\nEntre novamente para carregar os dados dessa pasta.");
+            navigator.sair();
         } catch (RuntimeException ex) {
             Alert alerta = new Alert(Alert.AlertType.ERROR,
                     "Não foi possível usar essa pasta para salvar os dados: " + ex.getMessage());

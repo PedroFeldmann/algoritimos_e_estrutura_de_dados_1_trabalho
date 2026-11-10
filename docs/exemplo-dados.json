@@ -1,0 +1,24 @@
+﻿[
+  {
+    "id": "exemplo-1", "nome": "Trabalho de Algoritmos", "descricao": "Entrega final da disciplina",
+    "dataCriacao": "2026-09-01", "dataLimite": "2026-12-05", "status": "ATIVO",
+    "etapas": [
+      { "id": "e1", "nome": "Levantamento de requisitos", "descricao": "", "dataLimite": "2026-10-01", "status": "CONCLUIDA",
+        "tarefas": [
+          { "id": "t1", "titulo": "Escrever PRD", "descricao": "", "dataLimite": "2026-09-20", "status": "CONCLUIDA" } ] },
+      { "id": "e2", "nome": "Implementação", "descricao": "", "dataLimite": "2026-11-20", "status": "EM_ANDAMENTO",
+        "tarefas": [
+          { "id": "t2", "titulo": "Camada de persistência", "descricao": "", "dataLimite": "2026-11-05", "status": "EM_ANDAMENTO" },
+          { "id": "t3", "titulo": "Telas JavaFX", "descricao": "", "dataLimite": "2026-11-15", "status": "NAO_INICIADA" } ] }
+    ]
+  },
+  {
+    "id": "exemplo-2", "nome": "Organizar viagem", "descricao": "Planejamento pessoal",
+    "dataCriacao": "2026-10-10", "dataLimite": null, "status": "ATIVO",
+    "etapas": [
+      { "id": "e3", "nome": "Reservas", "descricao": "", "dataLimite": "2026-11-30", "status": "NAO_INICIADA",
+        "tarefas": [
+          { "id": "t4", "titulo": "Comprar passagens", "descricao": "", "dataLimite": "2026-11-12", "status": "NAO_INICIADA" } ] }
+    ]
+  }
+]

@@ -5,22 +5,71 @@ import br.edu.trabalho.gerenciadorprojetos.repository.JsonProjetoRepository;
 import br.edu.trabalho.gerenciadorprojetos.repository.ProjetoRepository;
 import br.edu.trabalho.gerenciadorprojetos.service.ProjetoService;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
 /**
  * Ponto de entrada. Monta a cadeia de dependências manualmente (ADR-003: sem
- * framework de injeção de dependência) e abre o Dashboard.
+ * framework de injeção de dependência): primeiro a tela de login (ADR-006) e,
+ * depois de entrar, o Dashboard com os dados do usuário.
  */
 public class Main extends Application {
 
+    private AgendadorNotificacoes agendador;
+
     @Override
     public void start(Stage stage) {
-        ProjetoRepository repository = new JsonProjetoRepository(ArmazenamentoConfig.arquivoAtual());
-        ProjetoService service = new ProjetoService(repository);
-        Navigator navigator = new Navigator(stage);
+        // Falhas inesperadas (ex.: disco cheio ao gravar) viram um aviso em vez de
+        // o app simplesmente parar de responder.
+        Thread.setDefaultUncaughtExceptionHandler((t, ex) -> avisar(ex));
 
-        new DashboardView(service, navigator).exibir();
+        Navigator navigator = new Navigator(stage);
+        navigator.definirAoSair(() -> sair(navigator));
+        abrirLogin(navigator);
         stage.show();
+    }
+
+    @Override
+    public void stop() {
+        if (agendador != null) {
+            agendador.parar();
+        }
+        NotificacaoSistema.remover();
+    }
+
+    private void abrirLogin(Navigator navigator) {
+        new LoginView(navigator, sessao -> entrar(navigator, sessao)).exibir();
+    }
+
+    private void entrar(Navigator navigator, Sessao sessao) {
+        navigator.setSessao(sessao);
+        ProjetoRepository repository = new JsonProjetoRepository(ArmazenamentoConfig.arquivoDoUsuario(sessao.login()));
+        ProjetoService service = new ProjetoService(repository);
+
+        agendador = new AgendadorNotificacoes(service, sessao.login());
+        new DashboardView(service, navigator).exibir();
+        agendador.iniciar();
+    }
+
+    private void sair(Navigator navigator) {
+        if (agendador != null) {
+            agendador.parar();
+            agendador = null;
+        }
+        navigator.setSessao(null);
+        abrirLogin(navigator);
+    }
+
+    private static void avisar(Throwable ex) {
+        ex.printStackTrace();
+        Runnable mostrar = () -> new Alert(Alert.AlertType.ERROR,
+                "Ocorreu um erro: " + ex.getMessage()).showAndWait();
+        if (Platform.isFxApplicationThread()) {
+            mostrar.run();
+        } else {
+            Platform.runLater(mostrar);
+        }
     }
 
     public static void main(String[] args) {

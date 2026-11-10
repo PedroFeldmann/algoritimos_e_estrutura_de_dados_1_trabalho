@@ -1,4 +1,4 @@
-# Gerenciador de Projetos
+﻿# Gerenciador de Projetos
 
 Aplicação desktop em Java/JavaFX para gerenciar múltiplos projetos, suas etapas
 e as tarefas de cada etapa, com datas limite e cálculo automático de atraso.
@@ -8,9 +8,12 @@ Trabalho de Algoritmos e Estrutura de Dados 1.
 ## Documentação
 
 - [`docs/PRD.md`](docs/PRD.md) — escopo, domínio, requisitos e critérios de aceite.
-- [`docs/adr/`](docs/adr) — decisões de arquitetura (ADR-001 a ADR-005).
-- Wireframes das telas: publicados como artifact durante o desenvolvimento
-  (ver histórico da conversa/relatório do trabalho).
+- [`docs/adr/`](docs/adr) — decisões de arquitetura (ADR-001 a ADR-006).
+- [docs/exemplo-dados.json](docs/exemplo-dados.json) — dados de exemplo para demonstração.
+  Para usar: crie uma conta no app, feche-o e copie o arquivo para
+  `%USERPROFILE%\.gerenciador-projetos\dados-<seu-login>.json` (substitui os dados dessa conta).
+  Alternativa: com o app fechado e **antes** de criar qualquer conta, copie-o como `dados.json`
+  nessa mesma pasta — o primeiro usuário cadastrado adota esse arquivo.
 
 ## Como rodar
 
@@ -51,7 +54,8 @@ jpackage --type app-image ^
   --name GerenciadorDeProjetos ^
   --main-jar gerenciador-projetos-1.0-SNAPSHOT.jar ^
   --main-class br.edu.trabalho.gerenciadorprojetos.ui.Launcher ^
-  --app-version 1.0
+  --app-version 1.0 ^
+  --add-modules java.desktop,java.prefs
 ```
 
 O executável fica em `target/dist/GerenciadorDeProjetos/GerenciadorDeProjetos.exe`

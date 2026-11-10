@@ -27,6 +27,7 @@ public class ProjetoView {
     private final ProjetoService service;
     private final Navigator navigator;
     private final String projetoId;
+    private final FiltroLista filtro = new FiltroLista();
 
     public ProjetoView(ProjetoService service, Navigator navigator, String projetoId) {
         this.service = service;
@@ -63,14 +64,17 @@ public class ProjetoView {
 
         VBox lista = new VBox();
         lista.getStyleClass().addAll("card", "item-list");
-        List<Etapa> etapas = projeto.getEtapas();
+        List<Etapa> todas = projeto.getEtapas();
+        List<Etapa> etapas = filtro.aplicar(todas, Etapa::getStatus, Etapa::estaAtrasada, Etapa::getDataLimite);
         if (etapas.isEmpty()) {
-            Label vazio = new Label("Nenhuma etapa cadastrada ainda.");
+            Label vazio = new Label(todas.isEmpty()
+                    ? "Nenhuma etapa cadastrada ainda."
+                    : "Nenhuma etapa com esse filtro.");
             vazio.getStyleClass().add("empty-hint");
             lista.getChildren().add(vazio);
         } else {
             for (int i = 0; i < etapas.size(); i++) {
-                Node linha = linhaEtapa(projeto, etapas.get(i));
+                Node linha = linhaEtapa(projeto, etapas.get(i), i, etapas.size());
                 if (i == etapas.size() - 1) {
                     linha.getStyleClass().add("last-row");
                 }
@@ -78,7 +82,7 @@ public class ProjetoView {
             }
         }
 
-        VBox raiz = new VBox(20, breadcrumb, cabecalho, lista);
+        VBox raiz = new VBox(20, breadcrumb, cabecalho, filtro.barra(true, this::exibir), lista);
         raiz.setPadding(new Insets(28, 32, 32, 32));
         ScrollPane scroll = new ScrollPane(raiz);
         scroll.setFitToWidth(true);
@@ -86,7 +90,7 @@ public class ProjetoView {
         return scroll;
     }
 
-    private Node linhaEtapa(Projeto projeto, Etapa etapa) {
+    private Node linhaEtapa(Projeto projeto, Etapa etapa, int posicao, int total) {
         CheckBox concluida = new CheckBox();
         concluida.getStyleClass().add("task-checkbox");
         concluida.setSelected(etapa.getStatus() == Status.CONCLUIDA);
@@ -104,6 +108,9 @@ public class ProjetoView {
         nome.setOnMouseClicked(e -> new EtapaView(service, navigator, projeto.getId(), etapa.getId()).exibir());
         nome.setCursor(Cursor.HAND);
 
+        Label resumoTarefas = new Label(etapa.getTarefas().size() + " tarefas");
+        resumoTarefas.getStyleClass().add("item-sub");
+
         Label data = new Label(etapa.getDataLimite() != null ? etapa.getDataLimite().format(FORMATO_DATA) : "sem data");
         data.getStyleClass().add(etapa.estaAtrasada() ? "item-date-late" : "item-date");
 
@@ -115,18 +122,45 @@ public class ProjetoView {
         Button excluir = new Button("excluir");
         excluir.getStyleClass().addAll("btn-ghost", "btn-ghost-danger");
         excluir.setOnAction(e -> {
-            service.excluirEtapa(projeto.getId(), etapa.getId());
-            exibir();
+            int n = etapa.getTarefas().size();
+            String mensagem = "Excluir a etapa \"" + etapa.getNome() + "\""
+                    + (n > 0 ? " e suas " + n + " tarefas" : "") + "?\nEsta ação não pode ser desfeita.";
+            if (Dialogos.confirmarExclusao("Excluir etapa", mensagem)) {
+                service.excluirEtapa(projeto.getId(), etapa.getId());
+                exibir();
+            }
         });
 
         Region espacador = new Region();
         HBox.setHgrow(espacador, Priority.ALWAYS);
 
-        HBox linha = new HBox(12, concluida, nome, espacador, data,
-                StatusBadge.criar(etapa.getStatus(), etapa.estaAtrasada()), editar, excluir);
+        HBox linha = new HBox(12, concluida, nome, resumoTarefas, espacador, data,
+                StatusBadge.criar(etapa.getStatus(), etapa.estaAtrasada()),
+                FiltroLista.seletorStatus(etapa.getStatus(), novo -> {
+                    service.alterarStatusEtapa(projeto.getId(), etapa.getId(), novo);
+                    exibir();
+                }));
+        if (filtro.reordenavel()) {
+            linha.getChildren().addAll(botaoMover("▲", posicao > 0, () ->
+                    service.moverEtapa(projeto.getId(), etapa.getId(), -1)),
+                    botaoMover("▼", posicao < total - 1, () ->
+                            service.moverEtapa(projeto.getId(), etapa.getId(), 1)));
+        }
+        linha.getChildren().addAll(editar, excluir);
         linha.setAlignment(Pos.CENTER_LEFT);
         linha.getStyleClass().add("item-row");
         return linha;
+    }
+
+    private Button botaoMover(String texto, boolean habilitado, Runnable acao) {
+        Button botao = new Button(texto);
+        botao.getStyleClass().add("btn-ghost");
+        botao.setDisable(!habilitado);
+        botao.setOnAction(e -> {
+            acao.run();
+            exibir();
+        });
+        return botao;
     }
 
     private void criarEtapa() {

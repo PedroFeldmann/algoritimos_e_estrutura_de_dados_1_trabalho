@@ -312,3 +312,23 @@
     -fx-border-radius: 7;
     -fx-padding: 6 8 6 8;
 }
+
+
+/* ---------- login e avisos (ADR-006) ---------- */
+.login-card {
+    -fx-background-radius: 12;
+}
+.form-error {
+    -fx-text-fill: -fx-danger;
+    -fx-background-color: -fx-danger-soft;
+    -fx-background-radius: 6;
+    -fx-padding: 8 10 8 10;
+    -fx-font-size: 12px;
+}
+.alert-banner {
+    -fx-background-color: -fx-warning-soft;
+    -fx-text-fill: -fx-warning;
+    -fx-background-radius: 8;
+    -fx-padding: 10 14 10 14;
+    -fx-font-weight: bold;
+}

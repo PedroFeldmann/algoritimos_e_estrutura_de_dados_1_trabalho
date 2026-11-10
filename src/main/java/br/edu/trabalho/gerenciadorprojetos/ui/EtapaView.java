@@ -26,6 +26,7 @@ public class EtapaView {
     private final Navigator navigator;
     private final String projetoId;
     private final String etapaId;
+    private final FiltroLista filtro = new FiltroLista();
 
     public EtapaView(ProjetoService service, Navigator navigator, String projetoId, String etapaId) {
         this.service = service;
@@ -73,14 +74,17 @@ public class EtapaView {
 
         VBox lista = new VBox();
         lista.getStyleClass().addAll("card", "item-list");
-        List<Tarefa> tarefas = etapa.getTarefas();
+        List<Tarefa> todas = etapa.getTarefas();
+        List<Tarefa> tarefas = filtro.aplicar(todas, Tarefa::getStatus, Tarefa::estaAtrasada, Tarefa::getDataLimite);
         if (tarefas.isEmpty()) {
-            Label vazio = new Label("Nenhuma tarefa cadastrada ainda.");
+            Label vazio = new Label(todas.isEmpty()
+                    ? "Nenhuma tarefa cadastrada ainda."
+                    : "Nenhuma tarefa com esse filtro.");
             vazio.getStyleClass().add("empty-hint");
             lista.getChildren().add(vazio);
         } else {
             for (int i = 0; i < tarefas.size(); i++) {
-                Node linha = linhaTarefa(projeto, etapa, tarefas.get(i));
+                Node linha = linhaTarefa(projeto, etapa, tarefas.get(i), i, tarefas.size());
                 if (i == tarefas.size() - 1) {
                     linha.getStyleClass().add("last-row");
                 }
@@ -88,7 +92,7 @@ public class EtapaView {
             }
         }
 
-        VBox raiz = new VBox(20, breadcrumb, cabecalho, lista);
+        VBox raiz = new VBox(20, breadcrumb, cabecalho, filtro.barra(true, this::exibir), lista);
         raiz.setPadding(new Insets(28, 32, 32, 32));
         ScrollPane scroll = new ScrollPane(raiz);
         scroll.setFitToWidth(true);
@@ -96,13 +100,13 @@ public class EtapaView {
         return scroll;
     }
 
-    private Node linhaTarefa(Projeto projeto, Etapa etapa, Tarefa tarefa) {
+    private Node linhaTarefa(Projeto projeto, Etapa etapa, Tarefa tarefa, int posicao, int total) {
         CheckBox concluida = new CheckBox();
         concluida.getStyleClass().add("task-checkbox");
         concluida.setSelected(tarefa.getStatus() == Status.CONCLUIDA);
         concluida.setOnAction(e -> {
-            tarefa.setStatus(concluida.isSelected() ? Status.CONCLUIDA : Status.EM_ANDAMENTO);
-            service.salvarProjeto(projeto);
+            Status novo = concluida.isSelected() ? Status.CONCLUIDA : Status.EM_ANDAMENTO;
+            service.alterarStatusTarefa(projeto.getId(), etapa.getId(), tarefa.getId(), novo);
             exibir();
         });
 
@@ -123,18 +127,44 @@ public class EtapaView {
         Button excluir = new Button("excluir");
         excluir.getStyleClass().addAll("btn-ghost", "btn-ghost-danger");
         excluir.setOnAction(e -> {
-            service.excluirTarefa(projeto.getId(), etapa.getId(), tarefa.getId());
-            exibir();
+            if (Dialogos.confirmarExclusao("Excluir tarefa",
+                    "Excluir a tarefa " + tarefa.getTitulo() + "?\nEsta ação não pode ser desfeita.")) {
+                service.excluirTarefa(projeto.getId(), etapa.getId(), tarefa.getId());
+                exibir();
+            }
         });
 
         Region espacador = new Region();
         HBox.setHgrow(espacador, Priority.ALWAYS);
 
         HBox linha = new HBox(12, concluida, titulo, espacador, data,
-                StatusBadge.criar(tarefa.getStatus(), tarefa.estaAtrasada()), editar, excluir);
+                StatusBadge.criar(tarefa.getStatus(), tarefa.estaAtrasada()),
+                FiltroLista.seletorStatus(tarefa.getStatus(), novo -> {
+                    service.alterarStatusTarefa(projeto.getId(), etapa.getId(), tarefa.getId(), novo);
+                    exibir();
+                }));
+        if (filtro.reordenavel()) {
+            linha.getChildren().addAll(
+                    botaoMover("▲", posicao > 0, () ->
+                            service.moverTarefa(projeto.getId(), etapa.getId(), tarefa.getId(), -1)),
+                    botaoMover("▼", posicao < total - 1, () ->
+                            service.moverTarefa(projeto.getId(), etapa.getId(), tarefa.getId(), 1)));
+        }
+        linha.getChildren().addAll(editar, excluir);
         linha.setAlignment(Pos.CENTER_LEFT);
         linha.getStyleClass().add("item-row");
         return linha;
+    }
+
+    private Button botaoMover(String texto, boolean habilitado, Runnable acao) {
+        Button botao = new Button(texto);
+        botao.getStyleClass().add("btn-ghost");
+        botao.setDisable(!habilitado);
+        botao.setOnAction(e -> {
+            acao.run();
+            exibir();
+        });
+        return botao;
     }
 
     private void criarTarefa() {

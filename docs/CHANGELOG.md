@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 Histórico de mudanças de escopo/domínio/comportamento. Ver `CLAUDE.md` na raiz
 para a regra de quando registrar uma entrada aqui.
@@ -22,6 +22,44 @@ para a regra de quando registrar uma entrada aqui.
   `docs/adr/ADR-005-local-de-armazenamento-configuravel.md`. Sem a escolha,
   comportamento continua igual ao de ADR-002 (`~/.gerenciador-projetos`).
 
+## 2026-11-10 (3)
+
+- **multiusuário (ADR-006)**: tela de login/cadastro; cada usuário tem seu `dados-<login>.json`
+  e não vê os dados do outro. Senhas com PBKDF2 + sal. O primeiro usuário adota o
+  `dados.json` existente. "Sair" no Dashboard. Mudar o local dos dados leva todas as contas.
+- **notificações (ADR-006)**: banner de prazos no Dashboard e balão na bandeja do sistema
+  (ao entrar e a cada 30 min; cada item uma vez por sessão). Opção "Avisar prazos" por usuário.
+- **build**: `jpackage` agora com `--add-modules java.desktop,java.prefs`.
+- **testes**: 38 no total.
+
+## 2026-11-10 (2)
+
+- **UI, service**: confirmação antes de excluir projeto, etapa ou tarefa (mostra quantos
+  itens filhos serão apagados). Antes o Dashboard nem tinha "excluir projeto" (RF01).
+- **UI, service**: seletor de status (Não iniciada / Em andamento / Concluída) em cada
+  etapa e tarefa; antes só havia o checkbox de concluída.
+- **UI, service**: projetos podem ser arquivados/restaurados (`StatusProjeto`). Arquivados
+  saem do Dashboard, dos contadores e dos prazos; "Mostrar arquivados" os exibe de volta.
+- **UI**: filtro por status (Todas/Atrasadas/Não iniciadas/Em andamento/Concluídas) e
+  ordenação (manual ou por prazo) nas telas de Etapas e Tarefas; filtro nos Próximos prazos.
+- **UI, service**: reordenar etapas e tarefas manualmente (▲/▼), disponível na ordem manual
+  e sem filtro ativo.
+- **UI, repository**: exportar/importar todos os projetos para um arquivo JSON. Importar
+  atualiza projetos de mesmo id e adiciona os demais; arquivo inválido é recusado sem
+  alterar nada.
+- **testes**: 24 no total.
+
+## 2026-11-10
+
+- **repository**: gravação segura do `dados.json` (arquivo temporário + troca atômica) com
+  backup `.bak` da versão anterior. Arquivo corrompido não derruba mais o app: é preservado
+  como `dados.json.corrompido-<timestamp>` e os dados são restaurados do backup, se houver.
+  Campos desconhecidos no JSON são ignorados (compatível com versões futuras).
+- **service**: nomes/títulos em branco são rejeitados e espaços nas pontas removidos.
+- **ui**: erros inesperados agora aparecem num alerta em vez de o app travar em silêncio.
+- **testes**: de 4 para 19 testes (persistência, recuperação de arquivo corrompido, cascata,
+  validação, ordenação de prazos). **docs**: `docs/exemplo-dados.json` para demonstração.
+- Executável em `dist/` regerado.
 ## 2026-09-16
 
 - **UI**: redesenho visual das 3 telas de navegação (Dashboard, Etapas, Tarefas),

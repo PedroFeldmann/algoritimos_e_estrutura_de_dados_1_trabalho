@@ -5,6 +5,11 @@ import br.edu.trabalho.gerenciadorprojetos.domain.Projeto;
 import br.edu.trabalho.gerenciadorprojetos.domain.Tarefa;
 import br.edu.trabalho.gerenciadorprojetos.repository.ProjetoRepository;
 
+import br.edu.trabalho.gerenciadorprojetos.domain.Status;
+import br.edu.trabalho.gerenciadorprojetos.domain.StatusProjeto;
+
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +37,7 @@ public class ProjetoService {
     }
 
     public Projeto criarProjeto(String nome, String descricao) {
-        Projeto projeto = new Projeto(nome, descricao);
+        Projeto projeto = new Projeto(exigirTexto(nome, "nome do projeto"), descricao);
         repository.salvar(projeto);
         return projeto;
     }
@@ -45,7 +50,7 @@ public class ProjetoService {
     /** Nome, descrição e dataLimite são editáveis; id e dataCriacao não (docs/PRD.md, 5.1). */
     public void editarProjeto(String id, String nome, String descricao, java.time.LocalDate dataLimite) {
         Projeto projeto = buscarProjeto(id);
-        projeto.setNome(nome);
+        projeto.setNome(exigirTexto(nome, "nome do projeto"));
         projeto.setDescricao(descricao);
         projeto.setDataLimite(dataLimite);
         repository.salvar(projeto);
@@ -53,7 +58,7 @@ public class ProjetoService {
 
     public Etapa criarEtapa(String projetoId, String nome, String descricao, java.time.LocalDate dataLimite) {
         Projeto projeto = buscarProjeto(projetoId);
-        Etapa etapa = new Etapa(nome, descricao, dataLimite);
+        Etapa etapa = new Etapa(exigirTexto(nome, "nome da etapa"), descricao, dataLimite);
         projeto.adicionarEtapa(etapa);
         repository.salvar(projeto);
         return etapa;
@@ -68,7 +73,7 @@ public class ProjetoService {
     public void editarEtapa(String projetoId, String etapaId, String nome, String descricao, java.time.LocalDate dataLimite) {
         Projeto projeto = buscarProjeto(projetoId);
         Etapa etapa = buscarEtapa(projeto, etapaId);
-        etapa.setNome(nome);
+        etapa.setNome(exigirTexto(nome, "nome da etapa"));
         etapa.setDescricao(descricao);
         etapa.setDataLimite(dataLimite);
         repository.salvar(projeto);
@@ -84,7 +89,7 @@ public class ProjetoService {
     public Tarefa criarTarefa(String projetoId, String etapaId, String titulo, String descricao, java.time.LocalDate dataLimite) {
         Projeto projeto = buscarProjeto(projetoId);
         Etapa etapa = buscarEtapa(projeto, etapaId);
-        Tarefa tarefa = new Tarefa(titulo, descricao, dataLimite);
+        Tarefa tarefa = new Tarefa(exigirTexto(titulo, "título da tarefa"), descricao, dataLimite);
         etapa.adicionarTarefa(tarefa);
         repository.salvar(projeto);
         return tarefa;
@@ -101,7 +106,7 @@ public class ProjetoService {
         Projeto projeto = buscarProjeto(projetoId);
         Etapa etapa = buscarEtapa(projeto, etapaId);
         Tarefa tarefa = buscarTarefa(etapa, tarefaId);
-        tarefa.setTitulo(titulo);
+        tarefa.setTitulo(exigirTexto(titulo, "título da tarefa"));
         tarefa.setDescricao(descricao);
         tarefa.setDataLimite(dataLimite);
         repository.salvar(projeto);
@@ -112,6 +117,69 @@ public class ProjetoService {
                 .filter(t -> t.getId().equals(tarefaId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Tarefa não encontrada: " + tarefaId));
+    }
+
+    public void alterarStatusTarefa(String projetoId, String etapaId, String tarefaId, Status status) {
+        Projeto projeto = buscarProjeto(projetoId);
+        buscarTarefa(buscarEtapa(projeto, etapaId), tarefaId).setStatus(status);
+        repository.salvar(projeto);
+    }
+
+    /** Arquivar esconde o projeto do Dashboard e dos prazos sem apagar nada. */
+    public void alterarStatusProjeto(String projetoId, StatusProjeto status) {
+        Projeto projeto = buscarProjeto(projetoId);
+        projeto.setStatus(status);
+        repository.salvar(projeto);
+    }
+
+    /** Move a etapa {@code deslocamento} posições (-1 sobe, +1 desce); ignora se sair dos limites. */
+    public void moverEtapa(String projetoId, String etapaId, int deslocamento) {
+        Projeto projeto = buscarProjeto(projetoId);
+        if (mover(projeto.getEtapas(), indice(projeto.getEtapas(), e -> e.getId().equals(etapaId), etapaId), deslocamento)) {
+            repository.salvar(projeto);
+        }
+    }
+
+    public void moverTarefa(String projetoId, String etapaId, String tarefaId, int deslocamento) {
+        Projeto projeto = buscarProjeto(projetoId);
+        List<Tarefa> tarefas = buscarEtapa(projeto, etapaId).getTarefas();
+        if (mover(tarefas, indice(tarefas, t -> t.getId().equals(tarefaId), tarefaId), deslocamento)) {
+            repository.salvar(projeto);
+        }
+    }
+
+    private static <T> int indice(List<T> lista, java.util.function.Predicate<T> criterio, String id) {
+        for (int i = 0; i < lista.size(); i++) {
+            if (criterio.test(lista.get(i))) {
+                return i;
+            }
+        }
+        throw new IllegalArgumentException("Item não encontrado: " + id);
+    }
+
+    private static boolean mover(List<?> lista, int de, int deslocamento) {
+        int para = de + deslocamento;
+        if (para < 0 || para >= lista.size() || para == de) {
+            return false;
+        }
+        Collections.swap(lista, de, para);
+        return true;
+    }
+
+    public void exportar(Path destino) {
+        repository.exportarPara(destino);
+    }
+
+    public int importar(Path origem) {
+        return repository.importarDe(origem);
+    }
+
+    /** Rejeita nomes vazios/em branco e remove espaços nas pontas. */
+    private static String exigirTexto(String valor, String campo) {
+        if (valor == null || valor.isBlank()) {
+            throw new IllegalArgumentException("O " + campo + " não pode ficar em branco.");
+        }
+        return valor.trim();
     }
 
     public void salvarProjeto(Projeto projeto) {
@@ -132,6 +200,7 @@ public class ProjetoService {
      */
     public List<PrazoItem> listarProximosPrazos() {
         return repository.listarTodos().stream()
+                .filter(projeto -> projeto.getStatus() == StatusProjeto.ATIVO)
                 .flatMap(projeto -> projeto.getEtapas().stream().flatMap(etapa -> {
                     var itemEtapa = new PrazoItem(
                             etapa.getNome(),
