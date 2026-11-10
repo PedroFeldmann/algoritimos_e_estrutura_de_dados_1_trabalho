@@ -27,7 +27,15 @@ public class Main extends Application {
         Navigator navigator = new Navigator(stage);
         navigator.definirAoSair(() -> sair(navigator));
         abrirLogin(navigator);
+        // Tamanho explícito: alguns gerenciadores de janela do Linux ignoram o
+        // tamanho da Scene e abriam a janela minúscula.
+        stage.setMinWidth(800);
+        stage.setMinHeight(560);
+        stage.setWidth(980);
+        stage.setHeight(680);
+        stage.centerOnScreen();
         stage.show();
+        System.out.println("Janela: " + (int) stage.getWidth() + "x" + (int) stage.getHeight());
     }
 
     @Override

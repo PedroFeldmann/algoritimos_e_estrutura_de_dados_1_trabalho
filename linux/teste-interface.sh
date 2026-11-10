@@ -32,7 +32,7 @@ falhar() {
 # espera até 40 s por uma janela cujo título contenha $1; devolve o id dela
 esperar_janela() {
     for _ in $(seq 1 40); do
-        WID=$(xdotool search --name "$1" 2>/dev/null | head -n1)
+        WID=$(xdotool search --onlyvisible --name "$1" 2>/dev/null | head -n1)
         if [ -n "$WID" ]; then
             sleep 2   # deixa a tela terminar de desenhar
             return 0
@@ -53,6 +53,9 @@ tecla() { xdotool key "$1"; sleep 0.3; }
 # ---------- 1. primeira abertura ----------
 "$APP" & PID=$!
 esperar_janela "Criar conta" || falhar "tela 'Criar conta' não apareceu"
+LARGURA=$(xdotool getwindowgeometry "$WID" | sed -n 's/.*Geometry: \([0-9]*\)x.*/\1/p')
+echo "largura da janela: $LARGURA"
+[ "${LARGURA:-0}" -ge 700 ] || falhar "janela abriu pequena demais (${LARGURA}px)"
 echo "OK 1/4: tela 'Criar conta' apareceu"
 import -window root "$PRINTS/1-criar-conta.png"
 
