@@ -10,6 +10,12 @@ package br.edu.trabalho.gerenciadorprojetos.ui;
 public final class Launcher {
 
     public static void main(String[] args) {
+        // Renderização por software: evita tela branca/bugs visuais em máquinas cujo
+        // driver de vídeo não funciona bem com a aceleração (Direct3D/OpenGL) do JavaFX.
+        // Quem quiser a GPU pode rodar com -Dprism.order=d3d,sw.
+        if (System.getProperty("prism.order") == null) {
+            System.setProperty("prism.order", "sw");
+        }
         Main.main(args);
     }
 }
