@@ -1,9 +1,9 @@
-#!/bin/sh
-# Gera, NO LINUX, uma versão autossuficiente (com Java embutido, sem exigir Java instalado).
-# Requer: JDK 17+ com jpackage e Maven. O jpackage não faz compilação cruzada,
-# por isso este script precisa rodar numa máquina Linux.
+﻿#!/bin/sh
+# Gera, NO LINUX, uma versÃ£o autossuficiente (com Java embutido, sem exigir Java instalado).
+# Requer: JDK 17+ com jpackage e Maven. O jpackage nÃ£o faz compilaÃ§Ã£o cruzada,
+# por isso este script precisa rodar numa mÃ¡quina Linux.
 #
-# Uso (a partir da raiz do repositório):  sh linux/gerar-executavel.sh
+# Uso (a partir da raiz do repositÃ³rio):  sh linux/gerar-executavel.sh
 set -e
 
 RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
@@ -21,7 +21,7 @@ jpackage --type app-image \
     --main-jar gerenciador-projetos-1.0-SNAPSHOT.jar \
     --main-class br.edu.trabalho.gerenciadorprojetos.ui.Launcher \
     --app-version 1.0 \
-    --add-modules java.desktop,java.prefs
+    --add-modules java.desktop,java.prefs,jdk.unsupported
 
 tar -czf linux/GerenciadorDeProjetos-linux-standalone.tar.gz -C target/dist GerenciadorDeProjetos
 echo "Pronto: linux/GerenciadorDeProjetos-linux-standalone.tar.gz"

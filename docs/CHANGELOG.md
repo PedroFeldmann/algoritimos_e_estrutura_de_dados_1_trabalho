@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 Histórico de mudanças de escopo/domínio/comportamento. Ver `CLAUDE.md` na raiz
 para a regra de quando registrar uma entrada aqui.
@@ -21,6 +21,12 @@ para a regra de quando registrar uma entrada aqui.
   via `java.util.prefs.Preferences` e migra o arquivo existente para lá. Ver
   `docs/adr/ADR-005-local-de-armazenamento-configuravel.md`. Sem a escolha,
   comportamento continua igual ao de ADR-002 (`~/.gerenciador-projetos`).
+
+## 2026-11-10 (4)
+
+- **correção (tela branca)**: o executável não incluía o módulo `jdk.unsupported`; em PCs onde a GPU não é usada, o JavaFX cai para o desenho por software, que precisa dele, e a janela ficava branca. `jpackage` agora com `--add-modules java.desktop,java.prefs,jdk.unsupported`.
+- Windows: `GerenciadorDeProjetos-Compatibilidade.exe` e `Abrir-Modo-Compatibilidade.bat` (sem GPU, escala 1.0). Log de diagnóstico em `~/.gerenciador-projetos/log.txt`.
+- Linux: teste de interface automático no CI (cria conta, entra, reabre, faz login).
 
 ## 2026-11-10 (3)
 

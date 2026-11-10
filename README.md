@@ -55,7 +55,7 @@ jpackage --type app-image ^
   --main-jar gerenciador-projetos-1.0-SNAPSHOT.jar ^
   --main-class br.edu.trabalho.gerenciadorprojetos.ui.Launcher ^
   --app-version 1.0 ^
-  --add-modules java.desktop,java.prefs
+  --add-modules java.desktop,java.prefs,jdk.unsupported
 ```
 
 O executável fica em `target/dist/GerenciadorDeProjetos/GerenciadorDeProjetos.exe`
