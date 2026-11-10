@@ -39,5 +39,9 @@ extrai e roda `GerenciadorDeProjetos/bin/GerenciadorDeProjetos`.
 
 ## Observação
 
-Esta versão foi montada num computador Windows e **não foi executada em Linux** por quem a gerou.
-Se algo falhar, abra um terminal, rode `./executar.sh` e leia a mensagem de erro.
+A cada push, o GitHub Actions gera a versão autossuficiente num Ubuntu e roda um teste de
+interface (`linux/teste-interface.sh`): cria conta, entra, fecha, reabre e faz login. O arquivo
+pronto fica em **Actions → última execução → Artifacts → `GerenciadorDeProjetos-linux`**.
+
+Se algo falhar, abra um terminal, rode o app por ele e leia a mensagem de erro. O log também fica
+em `~/.gerenciador-projetos/log.txt`.
