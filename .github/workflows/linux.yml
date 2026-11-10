@@ -1,0 +1,38 @@
+name: Build Linux
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Testes
+        run: mvn -B test
+
+      - name: Gerar versão autossuficiente (Java embutido)
+        run: sh linux/gerar-executavel.sh
+
+      - name: Teste de fumaça (abre o app 15s numa tela virtual)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q xvfb libgtk-3-0 libxtst6 libxxf86vm1 libgl1
+          code=0
+          xvfb-run -a timeout 15 target/dist/GerenciadorDeProjetos/bin/GerenciadorDeProjetos || code=$?
+          echo "código de saída: $code (124 = continuou rodando até o timeout = OK)"
+          test "$code" = 124
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GerenciadorDeProjetos-linux
+          path: linux/GerenciadorDeProjetos-linux-standalone.tar.gz
